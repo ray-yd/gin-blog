@@ -49,24 +49,26 @@ func DeleteArticle(id int) int {
 	return errmsg.SUCCESS
 }
 
-// GetArticleList 查詢分類列表
-func GetArticleList(pageSize int, pageNum int) ([]Article, int) {
+// GetArticleList 查詢文章列表
+func GetArticleList(pageSize int, pageNum int) ([]Article, int, int) {
 	var articleList []Article
-	err := db.Preload("Category").Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&articleList).Error
+	var total int64
+	err := db.Preload("Category").Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&articleList).Count(&total).Error
 	if err != nil {
-		return nil, errmsg.ERROR
+		return nil, errmsg.ERROR, 0
 	}
-	return articleList, errmsg.SUCCESS
+	return articleList, errmsg.SUCCESS, int(total)
 }
 
 // GetCategoryArticle 查詢分類下的所有文章
-func GetCategoryArticle(id int, pageSize int, pageNum int) ([]Article, int) {
+func GetCategoryArticle(id int, pageSize int, pageNum int) ([]Article, int, int) {
 	var cateArtList []Article
-	err := db.Preload("Category").Limit(pageSize).Offset((pageNum-1)*pageSize).Where("cid = ?", id).Find(&cateArtList).Error
+	var total int64
+	err := db.Preload("Category").Limit(pageSize).Offset((pageNum-1)*pageSize).Where("cid = ?", id).Find(&cateArtList).Count(&total).Error
 	if err != nil {
-		return nil, errmsg.ErrorCategoryNotExist
+		return nil, errmsg.ErrorCategoryNotExist, 0
 	}
-	return cateArtList, errmsg.SUCCESS
+	return cateArtList, errmsg.SUCCESS, int(total)
 }
 
 // GetArticleInfo 查詢單個文章訊息

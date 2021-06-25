@@ -52,11 +52,12 @@ func DeleteCategory(id int) int {
 }
 
 // GetCategoryList 查詢分類列表
-func GetCategoryList(pageSize int, pageNum int) []Category {
+func GetCategoryList(pageSize int, pageNum int) ([]Category, int) {
 	var categoryList []Category
-	err := db.Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&categoryList).Error
+	var total int64
+	err := db.Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&categoryList).Count(&total).Error
 	if err != nil {
-		return nil
+		return nil, 0
 	}
-	return categoryList
+	return categoryList, int(total)
 }

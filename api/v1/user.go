@@ -5,6 +5,7 @@ import (
 	"github.com/gin-gonic/gin"
 	"github.com/ray-yd/gin-blog/model"
 	"github.com/ray-yd/gin-blog/utils/errmsg"
+	"github.com/ray-yd/gin-blog/utils/validator"
 	"net/http"
 	"strconv"
 )
@@ -14,7 +15,17 @@ var code int
 // AddUser 新增帳號
 func AddUser(c *gin.Context) {
 	var data model.User
+	var msg string
 	_ = c.ShouldBindJSON(&data)
+	msg, code := validator.Validate(&data)
+	if code != errmsg.SUCCESS {
+		c.JSON(200, gin.H{
+			"status":  code,
+			"message": msg,
+		})
+		return
+	}
+
 	code = model.CheckUser(data.UserName)
 	if code == errmsg.SUCCESS {
 		model.CreateUser(&data)
@@ -24,7 +35,6 @@ func AddUser(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, gin.H{
 		"Status":  code,
-		"data":    data,
 		"message": errmsg.GetErrorMessage(code),
 	})
 }
@@ -41,17 +51,18 @@ func GetUsers(c *gin.Context) {
 	if err != nil {
 		fmt.Println(err)
 	}
-	if pageSize == 0 {
-		pageSize = -1
-	}
-	if pageNum == 0 {
-		pageNum = -1
-	}
-	data := model.GetUserList(pageSize, pageNum)
+	//if pageSize == 0 {
+	//	pageSize = -1
+	//}
+	//if pageNum == 0 {
+	//	pageNum = -1
+	//}
+	data, total := model.GetUserList(pageSize, pageNum)
 	code = errmsg.SUCCESS
 	c.JSON(http.StatusOK, gin.H{
 		"status":  code,
 		"message": errmsg.GetErrorMessage(code),
+		"total":   total,
 		"data":    data,
 	})
 }

@@ -11,9 +11,9 @@ import (
 
 type User struct {
 	gorm.Model
-	UserName string `gorm:"column:username; type:varchar(20); not null" json:"username"`
-	PassWord string `gorm:"column:password; type:varchar(20); not null" json:"password"`
-	Role     uint   `gorm:"column:role; type:int" json:"role"`
+	UserName string `gorm:"column:username; type:varchar(20); not null" json:"username" validate:"required,min=3,max=12" label:"帳號"`
+	PassWord string `gorm:"column:password; type:varchar(20); not null" json:"password" validate:"required,min=6,max=20" label:"密碼"`
+	Role     uint   `gorm:"column:role; type:int DEFAULT:2"  json:"role" validate:"required,gte=2" label:"權限代碼"`
 }
 
 // CheckUser 查詢帳號是否存在
@@ -37,13 +37,14 @@ func CreateUser(data *User) int {
 }
 
 // GetUserList 查詢帳號列表
-func GetUserList(pageSize int, pageNum int) []User {
+func GetUserList(pageSize int, pageNum int) ([]User, int) {
 	var userList []User
-	err := db.Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&userList).Error
+	var total int64
+	err := db.Limit(pageSize).Offset((pageNum - 1) * pageSize).Find(&userList).Count(&total).Error
 	if err != nil {
-		return nil
+		return nil, 0
 	}
-	return userList
+	return userList, int(total)
 }
 
 // EditUser 編輯帳號
@@ -98,7 +99,7 @@ func CheckLogin(username string, password string) int {
 	if ScryptPassWord(password) != user.PassWord {
 		return errmsg.ErrorPasswordWrong
 	}
-	if user.Role != 0 {
+	if user.Role != 1 {
 		return errmsg.ErrorUserNoRight
 	}
 	return errmsg.SUCCESS
